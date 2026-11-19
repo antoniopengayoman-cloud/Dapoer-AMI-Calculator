@@ -1,5 +1,12 @@
 /* Penyimpanan lokal berbasis satu kunci localStorage untuk keranjang, form, dan riwayat estimasi */
-import type {CartItem, CategoryId, OrderHistoryEntry, OrderInquiry} from '../types.ts';
+import {SHIPPING_ZONES} from '../config.ts';
+import type {
+  CartItem,
+  CategoryId,
+  OrderHistoryEntry,
+  OrderInquiry,
+  ShippingZoneId,
+} from '../types.ts';
 
 export const STORAGE_KEY = 'dapoer_ami_state_v1';
 export const MAX_HISTORY_ENTRIES = 20;
@@ -16,10 +23,13 @@ const DEFAULT_INQUIRY: OrderInquiry = {
   deliveryDate: '',
   deliveryTime: '',
   deliveryAddress: '',
+  shippingZoneId: 'admin-confirm',
+  shippingDistanceKm: '',
   notes: '',
 };
 
 const VALID_CATEGORIES = new Set<CategoryId>(['catering', 'snack', 'warung']);
+const VALID_ZONES = new Set<ShippingZoneId>(SHIPPING_ZONES.map((z) => z.id));
 
 function sanitizeCartItems(rawCart: unknown): CartItem[] {
   if (!Array.isArray(rawCart)) {
@@ -46,11 +56,19 @@ function sanitizeInquiry(rawInquiry: unknown): OrderInquiry {
     return DEFAULT_INQUIRY;
   }
   const obj = rawInquiry as Partial<OrderInquiry>;
+  const shippingZoneId =
+    obj.shippingZoneId && VALID_ZONES.has(obj.shippingZoneId)
+      ? obj.shippingZoneId
+      : 'admin-confirm';
+
   return {
     customerName: typeof obj.customerName === 'string' ? obj.customerName : '',
     deliveryDate: typeof obj.deliveryDate === 'string' ? obj.deliveryDate : '',
     deliveryTime: typeof obj.deliveryTime === 'string' ? obj.deliveryTime : '',
     deliveryAddress: typeof obj.deliveryAddress === 'string' ? obj.deliveryAddress : '',
+    shippingZoneId,
+    shippingDistanceKm:
+      typeof obj.shippingDistanceKm === 'string' ? obj.shippingDistanceKm : '',
     notes: typeof obj.notes === 'string' ? obj.notes : '',
   };
 }

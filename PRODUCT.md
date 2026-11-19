@@ -21,6 +21,7 @@ Dokumen ini merangkum daftar fitur, prioritas, ketergantungan, dan status penger
 | FT-07 | Direct WhatsApp Checkout Redirect | Must | BL-06 | FT-06 | Selesai |
 | FT-08 | Salin Rincian Estimasi (Copy to Clipboard) | Should | BL-06 | FT-06 | Belum |
 | FT-09 | Riwayat Estimasi Pesanan Lokal | Should | BL-01, BL-05, BL-06 | FT-06, FT-07 | Selesai |
+| FT-10 | Estimasi Biaya Kirim Zona & Jarak | Should | BL-05, BL-06 | FT-06 | Selesai |
 
 ## Catatan & Keputusan Klarifikasi PRD
 

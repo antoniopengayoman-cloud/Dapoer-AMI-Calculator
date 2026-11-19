@@ -37,7 +37,73 @@ export const BUSINESS_MESSAGES = {
   categorySwitchConfirmLabel: 'Ganti Kategori & Reset Keranjang',
   categorySwitchCancelLabel: 'Batal',
   sambalIncludedLabel: 'Otomatis termasuk Sambal Kecombrang',
+  shippingEstimateDisclaimer:
+    'Biaya kirim merupakan estimasi awal dari Menara Danareksa dan tetap dikonfirmasi admin via WhatsApp.',
 } as const;
+
+export const DISTANCE_SHIPPING_RATE = {
+  freeUpToKm: 1,
+  baseFee: 5000,
+  perKmFee: 2500,
+  roundTo: 1000,
+  maxKm: 60,
+} as const;
+
+export const SHIPPING_ZONES: {
+  id: import('./types.ts').ShippingZoneId;
+  label: string;
+  areaDetail: string;
+  flatFee: number;
+}[] = [
+  {
+    id: 'admin-confirm',
+    label: 'Konfirmasi ongkir via admin',
+    areaDetail: 'Total belum termasuk biaya kirim',
+    flatFee: 0,
+  },
+  {
+    id: 'danareksa',
+    label: 'Area Menara Danareksa (0-1 km)',
+    areaDetail: 'Jl. Medan Merdeka Selatan & sekitar gedung',
+    flatFee: 0,
+  },
+  {
+    id: 'jakpus',
+    label: 'Jakarta Pusat (1-5 km)',
+    areaDetail: 'Gambir, Menteng, Thamrin, Tanah Abang, Senen',
+    flatFee: 15000,
+  },
+  {
+    id: 'jaksel',
+    label: 'Jakarta Selatan (5-10 km)',
+    areaDetail: 'Sudirman, Kuningan, Senopati, Setiabudi, Tebet',
+    flatFee: 22000,
+  },
+  {
+    id: 'jakbar',
+    label: 'Jakarta Barat (5-10 km)',
+    areaDetail: 'Slipi, Tomang, Grogol, Palmerah, Kebon Jeruk',
+    flatFee: 22000,
+  },
+  {
+    id: 'jaktim',
+    label: 'Jakarta Timur (8-14 km)',
+    areaDetail: 'Matraman, Rawamangun, Cawang, Jatinegara',
+    flatFee: 28000,
+  },
+  {
+    id: 'jakut',
+    label: 'Jakarta Utara (8-14 km)',
+    areaDetail: 'Kelapa Gading, Sunter, Kemayoran Utara, Pluit',
+    flatFee: 28000,
+  },
+  {
+    id: 'custom-distance',
+    label: 'Hitung berdasarkan jarak (km)',
+    areaDetail: 'Tarif dasar Rp 5.000 + Rp 2.500/km (gratis <= 1 km)',
+    flatFee: 0,
+  },
+];
 
 export const CATEGORIES: Category[] = [
   {

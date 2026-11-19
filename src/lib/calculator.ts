@@ -5,6 +5,8 @@ import {
   BRAND_INFO,
   BUSINESS_MESSAGES,
   CATEGORIES,
+  DISTANCE_SHIPPING_RATE,
+  SHIPPING_ZONES,
 } from '../config.ts';
 import type {
   CartItem,
@@ -15,9 +17,12 @@ import type {
   MoqEvaluation,
   OrderInquiry,
   PackageSelection,
+  ShippingEstimate,
+  ShippingZoneId,
   TotalsSummary,
 } from '../types.ts';
 import {
+  formatDecimal,
   formatIndonesianDate,
   formatIndonesianTime,
   formatRupiah,
@@ -29,6 +34,26 @@ export function isCategoryConflict(cart: CartItem[], targetCategoryId: CategoryI
     return false;
   }
   return cart[0].categoryId !== targetCategoryId;
+}
+
+export function filterMenuItems(
+  items: MenuItem[],
+  activeSubCategory: string,
+  searchQuery: string,
+): MenuItem[] {
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  return items.filter((item) => {
+    if (!item.isVisible) {
+      return false;
+    }
+    if (activeSubCategory !== 'Semua' && item.subCategory !== activeSubCategory) {
+      return false;
+    }
+    if (normalizedQuery && !item.name.toLowerCase().includes(normalizedQuery)) {
+      return false;
+    }
+    return true;
+  });
 }
 
 export function evaluateMoq(categoryId: CategoryId, cart: CartItem[]): MoqEvaluation {
@@ -265,16 +290,91 @@ export function updateCartItemQuantity(
     .filter((item): item is CartItem => item !== null);
 }
 
+export function calculateShippingEstimate(
+  zoneId: ShippingZoneId,
+  distanceKmInput: string,
+): ShippingEstimate {
+  const zone = SHIPPING_ZONES.find((z) => z.id === zoneId) ?? SHIPPING_ZONES[0];
+
+  if (zone.id === 'admin-confirm') {
+    return {
+      zoneId: zone.id,
+      zoneLabel: zone.label,
+      isCalculated: false,
+      shippingCost: 0,
+      distanceKm: null,
+      isDistanceValid: true,
+    };
+  }
+
+  if (zone.id !== 'custom-distance') {
+    return {
+      zoneId: zone.id,
+      zoneLabel: zone.label,
+      isCalculated: true,
+      shippingCost: zone.flatFee,
+      distanceKm: null,
+      isDistanceValid: true,
+    };
+  }
+
+  const normalized = distanceKmInput.trim().replace(',', '.');
+  if (!normalized || !/^\d+(\.\d+)?$/.test(normalized)) {
+    return {
+      zoneId: zone.id,
+      zoneLabel: zone.label,
+      isCalculated: false,
+      shippingCost: 0,
+      distanceKm: null,
+      isDistanceValid: false,
+      distanceError: 'Masukkan jarak antara 0,1 sampai 60 km, contoh: 4,5.',
+    };
+  }
+
+  const parsedKm = Number.parseFloat(normalized);
+  if (!Number.isFinite(parsedKm) || parsedKm <= 0 || parsedKm > DISTANCE_SHIPPING_RATE.maxKm) {
+    return {
+      zoneId: zone.id,
+      zoneLabel: zone.label,
+      isCalculated: false,
+      shippingCost: 0,
+      distanceKm: null,
+      isDistanceValid: false,
+      distanceError: 'Masukkan jarak antara 0,1 sampai 60 km, contoh: 4,5.',
+    };
+  }
+
+  const shippingCost =
+    parsedKm <= DISTANCE_SHIPPING_RATE.freeUpToKm
+      ? 0
+      : Math.round(
+          (DISTANCE_SHIPPING_RATE.baseFee + parsedKm * DISTANCE_SHIPPING_RATE.perKmFee) /
+            DISTANCE_SHIPPING_RATE.roundTo,
+        ) * DISTANCE_SHIPPING_RATE.roundTo;
+
+  return {
+    zoneId: zone.id,
+    zoneLabel: `Jarak ${formatDecimal(parsedKm)} km`,
+    isCalculated: true,
+    shippingCost,
+    distanceKm: parsedKm,
+    isDistanceValid: true,
+  };
+}
+
 export function validateOrderInquiry(inquiry: OrderInquiry): {
   isValid: boolean;
   trimmed: OrderInquiry;
   errors: InquiryErrors;
 } {
+  const zoneId: ShippingZoneId = inquiry.shippingZoneId ?? 'admin-confirm';
   const trimmed: OrderInquiry = {
     customerName: inquiry.customerName.trim(),
     deliveryDate: inquiry.deliveryDate.trim(),
     deliveryTime: inquiry.deliveryTime.trim(),
     deliveryAddress: inquiry.deliveryAddress.trim(),
+    shippingZoneId: zoneId,
+    shippingDistanceKm: (inquiry.shippingDistanceKm ?? '').trim(),
     notes: inquiry.notes.trim(),
   };
 
@@ -287,6 +387,14 @@ export function validateOrderInquiry(inquiry: OrderInquiry): {
   if (trimmed.deliveryAddress.length < 5) {
     errors.deliveryAddress =
       'Masukkan alamat pengantaran area Jakarta, contoh: Menara Danareksa Lt. 5, Jl. Medan Merdeka Selatan No. 14.';
+  }
+
+  const shippingEstimate = calculateShippingEstimate(
+    trimmed.shippingZoneId,
+    trimmed.shippingDistanceKm,
+  );
+  if (!shippingEstimate.isDistanceValid && shippingEstimate.distanceError) {
+    errors.shippingDistanceKm = shippingEstimate.distanceError;
   }
 
   return {
@@ -312,6 +420,10 @@ export function buildWhatsAppMessage(
   const category = CATEGORIES.find((c) => c.id === categoryId) ?? CATEGORIES[0];
   const totals = calculateTotals(cart);
   const leadTime = checkBandungLeadTime(cart, inquiry.deliveryDate);
+  const shipping = calculateShippingEstimate(
+    inquiry.shippingZoneId ?? 'admin-confirm',
+    inquiry.shippingDistanceKm ?? '',
+  );
 
   const formattedDate = formatIndonesianDate(inquiry.deliveryDate);
   const formattedTime = formatIndonesianTime(inquiry.deliveryTime);
@@ -348,6 +460,20 @@ export function buildWhatsAppMessage(
 
   const notesDisplay = notesParts.length > 0 ? notesParts.join(' | ') : '-';
 
+  const pricingLines = shipping.isCalculated
+    ? [
+        `Total Porsi: ${totals.totalQty} porsi`,
+        `Subtotal Menu: ${formatRupiah(totals.totalEstimatedPrice)}`,
+        `Estimasi Ongkos Kirim (${shipping.zoneLabel}): ${formatRupiah(shipping.shippingCost)}`,
+        `Estimasi Total Keseluruhan: ${formatRupiah(totals.totalEstimatedPrice + shipping.shippingCost)}`,
+        '(Catatan: Biaya kirim di atas adalah estimasi awal dan akan dikonfirmasi ulang oleh admin)',
+      ]
+    : [
+        `Total Porsi: ${totals.totalQty} porsi`,
+        `Total Estimasi Harga: ${formatRupiah(totals.totalEstimatedPrice)}`,
+        '(Catatan: Harga belum termasuk ongkos kirim)',
+      ];
+
   return [
     'Halo Dapoer AMI! Saya ingin melakukan pemesanan / estimasi harga dengan rincian berikut:',
     '',
@@ -359,9 +485,7 @@ export function buildWhatsAppMessage(
     'Rincian Pesanan:',
     itemLines,
     '',
-    `Total Porsi: ${totals.totalQty} porsi`,
-    `Total Estimasi Harga: ${formatRupiah(totals.totalEstimatedPrice)}`,
-    '(Catatan: Harga belum termasuk ongkos kirim)',
+    ...pricingLines,
     '',
     `Catatan Tambahan: ${notesDisplay}`,
     '',

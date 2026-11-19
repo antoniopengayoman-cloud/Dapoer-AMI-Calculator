@@ -1,4 +1,5 @@
 /* Komponen utama aplikasi Katalog Produk & Kalkulator Estimasi Dapoer AMI (FT-01 hingga FT-07 & FT-09) */
+import {MapPin, Phone} from 'lucide-react';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {CalculatorDrawer} from './components/CalculatorDrawer.tsx';
 import {CalculatorSummary} from './components/CalculatorSummary.tsx';
@@ -11,6 +12,7 @@ import {MenuCatalog} from './components/MenuCatalog.tsx';
 import {OrderHistorySection} from './components/OrderHistorySection.tsx';
 import {BRAND_INFO, CATEGORIES, MENU_ITEMS, SUB_CATEGORIES} from './config.ts';
 import {
+  calculateShippingEstimate,
   calculateTotals,
   checkBandungLeadTime,
   evaluateMoq,
@@ -39,6 +41,7 @@ export default function App() {
     initialState.activeCategoryId,
   );
   const [activeSubCategory, setActiveSubCategory] = useState<string>('Semua');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [cart, setCart] = useState<CartItem[]>(initialState.cart);
   const [inquiry, setInquiry] = useState<OrderInquiry>(initialState.inquiry);
   const [history, setHistory] = useState<OrderHistoryEntry[]>(initialState.history);
@@ -82,6 +85,7 @@ export default function App() {
   const handleSelectCategory = (categoryId: CategoryId) => {
     setActiveCategoryId(categoryId);
     setActiveSubCategory('Semua');
+    setSearchQuery('');
   };
 
   const handleAddRegularItem = (menuItem: MenuItem) => {
@@ -155,6 +159,10 @@ export default function App() {
   const handleSaveToHistory = (trimmedInquiry: OrderInquiry, whatsappMessage: string) => {
     const categoryName =
       CATEGORIES.find((c) => c.id === effectiveCategoryId)?.name ?? 'Paket Catering';
+    const shippingEstimate = calculateShippingEstimate(
+      trimmedInquiry.shippingZoneId,
+      trimmedInquiry.shippingDistanceKm,
+    );
     const entryId =
       typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
         ? crypto.randomUUID()
@@ -167,7 +175,7 @@ export default function App() {
       categoryName,
       items: cart.map((item) => ({...item})),
       totalQty: totalsSummary.totalQty,
-      totalEstimatedPrice: totalsSummary.totalEstimatedPrice,
+      totalEstimatedPrice: totalsSummary.totalEstimatedPrice + shippingEstimate.shippingCost,
       hasBandungItem: leadTimeEvaluation.hasBandungItem,
       inquiry: {...trimmedInquiry},
       whatsappMessage,
@@ -195,16 +203,50 @@ export default function App() {
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
       <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4 sm:flex-row sm:items-baseline sm:justify-between sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
-              {BRAND_INFO.name}
-            </h1>
-            <p className="text-sm text-neutral-600">{BRAND_INFO.subtitle}</p>
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 lg:px-8">
+          <div className="flex items-center gap-3.5">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50 sm:h-14 sm:w-14">
+              <img
+                src="/assets/aistudio/Dapoer_AMI_LOGO_440421b5.webp"
+                alt="Logo Dapoer AMI"
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl">
+                {BRAND_INFO.name}
+              </h1>
+              <p className="text-sm text-neutral-600">{BRAND_INFO.subtitle}</p>
+            </div>
           </div>
-          <p className="text-sm text-neutral-600">
-            {BRAND_INFO.serviceArea} · {BRAND_INFO.operationalContact}
-          </p>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-neutral-600 sm:justify-end">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
+                <span>{BRAND_INFO.serviceArea}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 tabular-nums">
+                <Phone className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden="true" />
+                <span>{BRAND_INFO.operationalContact}</span>
+              </span>
+            </div>
+
+            <nav aria-label="Navigasi cepat" className="hidden items-center gap-4 md:flex">
+              <a
+                href="#data-pengiriman"
+                className="whitespace-nowrap text-sm font-medium text-neutral-700 hover:text-orange-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+              >
+                Pengiriman
+              </a>
+              <a
+                href="#riwayat-estimasi"
+                className="whitespace-nowrap text-sm font-medium text-neutral-700 hover:text-orange-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+              >
+                Riwayat{history.length > 0 ? ` (${history.length})` : ''}
+              </a>
+            </nav>
+          </div>
         </div>
       </header>
 
@@ -222,8 +264,10 @@ export default function App() {
               items={visibleMenuItems}
               subCategories={SUB_CATEGORIES[activeCategoryId]}
               activeSubCategory={activeSubCategory}
+              searchQuery={searchQuery}
               cart={cart}
               onSelectSubCategory={setActiveSubCategory}
+              onSearchChange={setSearchQuery}
               onAddRegularItem={handleAddRegularItem}
               onUpdateRegularQty={handleUpdateRegularQty}
               onOpenConfigurator={handleOpenConfigurator}

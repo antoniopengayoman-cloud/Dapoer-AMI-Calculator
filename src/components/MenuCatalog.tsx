@@ -1,5 +1,16 @@
-/* Komponen katalog produk dan filter sub-kategori dengan tata letak modern dan minimalis (FT-02) */
-import {Award, Clock, Coffee, Minus, Plus, SlidersHorizontal, UtensilsCrossed} from 'lucide-react';
+/* Komponen katalog produk, pencarian nama menu, dan filter sub-kategori (FT-02) */
+import {
+  Award,
+  Clock,
+  Coffee,
+  Minus,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  UtensilsCrossed,
+  X,
+} from 'lucide-react';
+import {filterMenuItems} from '../lib/calculator.ts';
 import {formatRupiah} from '../lib/format.ts';
 import type {CartItem, MenuItem} from '../types.ts';
 
@@ -7,8 +18,10 @@ interface MenuCatalogProps {
   items: MenuItem[];
   subCategories: string[];
   activeSubCategory: string;
+  searchQuery: string;
   cart: CartItem[];
   onSelectSubCategory: (subCategory: string) => void;
+  onSearchChange: (query: string) => void;
   onAddRegularItem: (item: MenuItem) => void;
   onUpdateRegularQty: (menuItemId: string, delta: number) => void;
   onOpenConfigurator: (item: MenuItem) => void;
@@ -18,17 +31,17 @@ export function MenuCatalog({
   items,
   subCategories,
   activeSubCategory,
+  searchQuery,
   cart,
   onSelectSubCategory,
+  onSearchChange,
   onAddRegularItem,
   onUpdateRegularQty,
   onOpenConfigurator,
 }: MenuCatalogProps) {
   const showSubFilters = subCategories.length > 1;
-  const filteredItems =
-    activeSubCategory === 'Semua'
-      ? items
-      : items.filter((item) => item.subCategory === activeSubCategory);
+  const filteredItems = filterMenuItems(items, activeSubCategory, searchQuery);
+  const hasActiveFilter = searchQuery.trim().length > 0 || activeSubCategory !== 'Semua';
 
   const getRegularCartQty = (menuItemId: string): number => {
     const found = cart.find((c) => c.menuItemId === menuItemId && !c.optionSummary);
@@ -41,39 +54,92 @@ export function MenuCatalog({
       .reduce((sum, item) => sum + item.quantity, 0);
   };
 
+  const handleResetFilters = () => {
+    onSearchChange('');
+    onSelectSubCategory('Semua');
+  };
+
   return (
     <section aria-label="Daftar Menu" className="mt-6">
-      {showSubFilters && (
-        <div
-          role="group"
-          aria-label="Filter sub-kategori"
-          className="mb-4 flex flex-wrap gap-2"
-        >
-          {subCategories.map((sub) => {
-            const isSelected = sub === activeSubCategory;
-            return (
+      <div className="mb-4 space-y-3">
+        <div>
+          <label
+            htmlFor="menu-search"
+            className="block text-sm font-medium text-neutral-900"
+          >
+            Cari menu
+          </label>
+          <div className="relative mt-1.5">
+            <Search
+              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+              aria-hidden="true"
+            />
+            <input
+              id="menu-search"
+              name="menuSearch"
+              type="search"
+              inputMode="search"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Contoh: Tongkol, Bento, Spaghetti"
+              className="w-full min-h-[44px] rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-11 text-base text-neutral-900 placeholder:text-neutral-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+            />
+            {searchQuery.length > 0 && (
               <button
-                key={sub}
                 type="button"
-                onClick={() => onSelectSubCategory(sub)}
-                className={`min-h-[44px] rounded-xl border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700 ${
-                  isSelected
-                    ? 'border-orange-700 bg-orange-50 text-orange-700'
-                    : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100'
-                }`}
+                aria-label="Hapus pencarian"
+                onClick={() => onSearchChange('')}
+                className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-neutral-500 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
               >
-                {sub}
+                <X className="h-4 w-4" aria-hidden="true" />
               </button>
-            );
-          })}
+            )}
+          </div>
         </div>
-      )}
+
+        {showSubFilters && (
+          <div
+            role="group"
+            aria-label="Filter sub-kategori"
+            className="flex flex-wrap gap-2"
+          >
+            {subCategories.map((sub) => {
+              const isSelected = sub === activeSubCategory;
+              return (
+                <button
+                  key={sub}
+                  type="button"
+                  onClick={() => onSelectSubCategory(sub)}
+                  className={`min-h-[44px] rounded-xl border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700 ${
+                    isSelected
+                      ? 'border-orange-700 bg-orange-50 text-orange-700'
+                      : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100'
+                  }`}
+                >
+                  {sub}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {filteredItems.length === 0 ? (
         <div className="rounded-2xl bg-white p-8 text-center">
           <p className="text-sm text-neutral-600">
-            Belum ada menu yang sesuai pada sub-kategori ini.
+            {searchQuery.trim()
+              ? `Tidak ada menu dengan nama "${searchQuery.trim()}" pada kategori ini.`
+              : 'Belum ada menu yang sesuai pada sub-kategori ini.'}
           </p>
+          {hasActiveFilter && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+            >
+              Reset Pencarian
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

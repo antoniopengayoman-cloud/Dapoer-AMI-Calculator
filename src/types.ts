@@ -52,17 +52,47 @@ export interface CartItem {
   leadTimeNote?: string;
 }
 
+export type ShippingZoneId =
+  | 'admin-confirm'
+  | 'danareksa'
+  | 'jakpus'
+  | 'jaksel'
+  | 'jakbar'
+  | 'jaktim'
+  | 'jakut'
+  | 'custom-distance';
+
+export interface ShippingZoneOption {
+  id: ShippingZoneId;
+  label: string;
+  areaDetail: string;
+  flatFee: number;
+}
+
+export interface ShippingEstimate {
+  zoneId: ShippingZoneId;
+  zoneLabel: string;
+  isCalculated: boolean;
+  shippingCost: number;
+  distanceKm: number | null;
+  isDistanceValid: boolean;
+  distanceError?: string;
+}
+
 export interface OrderInquiry {
   customerName: string;
   deliveryDate: string;
   deliveryTime: string;
   deliveryAddress: string;
+  shippingZoneId: ShippingZoneId;
+  shippingDistanceKm: string;
   notes: string;
 }
 
 export interface InquiryErrors {
   customerName?: string;
   deliveryAddress?: string;
+  shippingDistanceKm?: string;
 }
 
 export interface MoqEvaluation {
