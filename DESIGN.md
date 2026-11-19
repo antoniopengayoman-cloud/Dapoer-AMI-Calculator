@@ -11,7 +11,7 @@ Dokumen ini mencatat keputusan desain antarmuka yang telah disetujui untuk aplik
 | Sapaan pengguna | Anda |
 | Susunan halaman | Satu halaman bergulir (mobile-first mulai 360 px, grid responsif di layar besar) |
 | Posisi aksi utama | Bar kalkulator menempel di bagian bawah layar |
-| Tampilan gambar menu | Placeholder kotak netral (`bg-neutral-100`) dengan ikon `lucide-react` (`text-neutral-400`) dan nama menu |
+| Tampilan gambar menu | Foto resmi dari tim untuk seluruh `Menu Snack` (`Poffertjes`, `Spaghetti Bolognese`, `Spaghetti Carbonara`, `Spaghetti Aglio Olio`, `Macaroni Schotel`, `Baso Tahu Bandoeng`), selainnya placeholder kotak netral (`bg-neutral-100`) dengan ikon `lucide-react` (`text-neutral-400`) dan nama menu |
 | Logo merek | Logo resmi `Dapoer AMI` (`/assets/aistudio/Dapoer_AMI_LOGO_440421b5.webp`) di bagian atas kiri header |
 
 ## Token Visual & Aturan Gaya

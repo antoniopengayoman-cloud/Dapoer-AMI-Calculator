@@ -1,23 +1,26 @@
-/* Formulir data pengiriman, penghitung estimasi ongkir zona/jarak, pratinjau pesan WhatsApp, dan simpan riwayat (FT-06, FT-07, FT-09, FT-10) */
+/* Formulir data pengiriman, pratinjau pesan WhatsApp, dan simpan riwayat (FT-06, FT-07, FT-09) */
 import {
   AlertTriangle,
   BookmarkCheck,
+  Calendar,
   CheckCircle2,
+  ClipboardList,
   Clock,
   Lock,
+  MapPin,
   MessageCircle,
-  Truck,
+  Package,
+  StickyNote,
+  Wallet,
 } from 'lucide-react';
 import {useEffect, useRef, useState} from 'react';
-import {BUSINESS_MESSAGES, SHIPPING_ZONES} from '../config.ts';
+import {BUSINESS_MESSAGES} from '../config.ts';
 import {
   buildWhatsAppMessage,
+  buildWhatsAppPreviewData,
   buildWhatsAppUrl,
-  calculateShippingEstimate,
-  calculateTotals,
   validateOrderInquiry,
 } from '../lib/calculator.ts';
-import {formatRupiah} from '../lib/format.ts';
 import type {
   CartItem,
   CategoryId,
@@ -25,7 +28,6 @@ import type {
   LeadTimeEvaluation,
   MoqEvaluation,
   OrderInquiry,
-  ShippingZoneId,
 } from '../types.ts';
 
 interface CheckoutPreviewFormProps {
@@ -52,22 +54,15 @@ export function CheckoutPreviewForm({
   const [errors, setErrors] = useState<InquiryErrors>({});
   const [savedFeedback, setSavedFeedback] = useState(false);
   const addressInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const distanceInputRef = useRef<HTMLInputElement | null>(null);
 
   const effectiveCategoryId = cart.length > 0 ? cart[0].categoryId : activeCategoryId;
   const isFormUnlocked = cart.length > 0 && moq.isMoqValid;
 
-  const totals = calculateTotals(cart);
-  const shippingEstimate = calculateShippingEstimate(
-    inquiry.shippingZoneId,
-    inquiry.shippingDistanceKm,
-  );
-  const grandTotal = totals.totalEstimatedPrice + shippingEstimate.shippingCost;
-  const selectedZone =
-    SHIPPING_ZONES.find((z) => z.id === inquiry.shippingZoneId) ?? SHIPPING_ZONES[0];
-
   const previewValidation = validateOrderInquiry(inquiry);
   const canSendWhatsApp = isFormUnlocked && previewValidation.isValid;
+  const previewData = canSendWhatsApp
+    ? buildWhatsAppPreviewData(previewValidation.trimmed, cart, effectiveCategoryId)
+    : null;
   const previewMessage = canSendWhatsApp
     ? buildWhatsAppMessage(previewValidation.trimmed, cart, effectiveCategoryId)
     : '';
@@ -85,18 +80,6 @@ export function CheckoutPreviewForm({
     }
   };
 
-  const handleZoneChange = (zoneId: ShippingZoneId) => {
-    const next: OrderInquiry = {
-      ...inquiry,
-      shippingZoneId: zoneId,
-      shippingDistanceKm: zoneId === 'custom-distance' ? inquiry.shippingDistanceKm : '',
-    };
-    onChangeInquiry(next);
-    if (errors.shippingDistanceKm) {
-      setErrors((prev) => ({...prev, shippingDistanceKm: undefined}));
-    }
-  };
-
   const runValidation = (): OrderInquiry | null => {
     const result = validateOrderInquiry(inquiry);
     onChangeInquiry(result.trimmed);
@@ -107,8 +90,6 @@ export function CheckoutPreviewForm({
         nameInputRef.current.focus();
       } else if (result.errors.deliveryAddress && addressInputRef.current) {
         addressInputRef.current.focus();
-      } else if (result.errors.shippingDistanceKm && distanceInputRef.current) {
-        distanceInputRef.current.focus();
       }
       return null;
     }
@@ -162,10 +143,10 @@ export function CheckoutPreviewForm({
           id="checkout-form-heading"
           className="text-lg font-semibold text-neutral-900"
         >
-          Data Pengiriman &amp; Estimasi Ongkos Kirim
+          Data Pengiriman &amp; Pratinjau WhatsApp
         </h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Lengkapi alamat Jakarta dan pilih zona atau jarak kirim untuk melihat total biaya Anda.
+          Lengkapi alamat Jakarta Anda untuk menyiapkan pesan pesanan ke admin.
         </p>
       </div>
 
@@ -216,9 +197,10 @@ export function CheckoutPreviewForm({
           <div>
             <label
               htmlFor="deliveryDate"
-              className="block text-sm font-medium text-neutral-900"
+              className="flex items-center gap-1.5 text-sm font-medium text-neutral-900"
             >
-              Tanggal Kirim (opsional)
+              <Calendar className="h-4 w-4 shrink-0 text-neutral-500" aria-hidden="true" />
+              <span>Tanggal Kirim (opsional)</span>
             </label>
             <input
               id="deliveryDate"
@@ -237,9 +219,10 @@ export function CheckoutPreviewForm({
           <div>
             <label
               htmlFor="deliveryTime"
-              className="block text-sm font-medium text-neutral-900"
+              className="flex items-center gap-1.5 text-sm font-medium text-neutral-900"
             >
-              Jam Kirim (opsional)
+              <Clock className="h-4 w-4 shrink-0 text-neutral-500" aria-hidden="true" />
+              <span>Jam Kirim (opsional)</span>
             </label>
             <input
               id="deliveryTime"
@@ -269,9 +252,12 @@ export function CheckoutPreviewForm({
         <div>
           <label
             htmlFor="deliveryAddress"
-            className="block text-sm font-medium text-neutral-900"
+            className="flex items-center gap-1.5 text-sm font-medium text-neutral-900"
           >
-            Alamat Pengantaran Area Jakarta <span className="text-red-700">*</span>
+            <MapPin className="h-4 w-4 shrink-0 text-neutral-500" aria-hidden="true" />
+            <span>
+              Alamat Pengantaran Area Jakarta <span className="text-red-700">*</span>
+            </span>
           </label>
           <textarea
             ref={addressInputRef}
@@ -294,78 +280,13 @@ export function CheckoutPreviewForm({
           )}
         </div>
 
-        {/* Penghitung Estimasi Ongkos Kirim Zona / Jarak (FT-10) */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className={inquiry.shippingZoneId === 'custom-distance' ? '' : 'sm:col-span-2'}>
-            <label
-              htmlFor="shippingZoneId"
-              className="block text-sm font-medium text-neutral-900"
-            >
-              Zona / Perkiraan Ongkos Kirim
-            </label>
-            <select
-              id="shippingZoneId"
-              name="shippingZoneId"
-              disabled={!isFormUnlocked}
-              value={inquiry.shippingZoneId}
-              onChange={(e) => handleZoneChange(e.target.value as ShippingZoneId)}
-              className="mt-1.5 w-full min-h-[44px] rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-base text-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
-            >
-              {SHIPPING_ZONES.map((zone) => (
-                <option key={zone.id} value={zone.id}>
-                  {zone.label}
-                  {zone.id !== 'admin-confirm' && zone.id !== 'custom-distance'
-                    ? ` (${zone.flatFee === 0 ? 'Gratis' : formatRupiah(zone.flatFee)})`
-                    : ''}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-neutral-600">{selectedZone.areaDetail}</p>
-          </div>
-
-          {inquiry.shippingZoneId === 'custom-distance' && (
-            <div>
-              <label
-                htmlFor="shippingDistanceKm"
-                className="block text-sm font-medium text-neutral-900"
-              >
-                Jarak dari Menara Danareksa (km) <span className="text-red-700">*</span>
-              </label>
-              <input
-                ref={distanceInputRef}
-                id="shippingDistanceKm"
-                name="shippingDistanceKm"
-                type="text"
-                inputMode="decimal"
-                disabled={!isFormUnlocked}
-                value={inquiry.shippingDistanceKm}
-                onChange={(e) => handleFieldChange('shippingDistanceKm', e.target.value)}
-                placeholder="Contoh: 4,5"
-                aria-invalid={Boolean(errors.shippingDistanceKm)}
-                aria-describedby={
-                  errors.shippingDistanceKm ? 'shippingDistanceKm-error' : undefined
-                }
-                className="mt-1.5 w-full min-h-[44px] rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-base text-neutral-900 placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
-              />
-              {errors.shippingDistanceKm ? (
-                <p id="shippingDistanceKm-error" className="mt-1.5 text-sm text-red-700">
-                  {errors.shippingDistanceKm}
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-neutral-600">
-                  Isi antara 0,1 sampai 60 km (bisa pakai koma).
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-
         <div>
           <label
             htmlFor="notes"
-            className="block text-sm font-medium text-neutral-900"
+            className="flex items-center gap-1.5 text-sm font-medium text-neutral-900"
           >
-            Catatan Tambahan (opsional)
+            <StickyNote className="h-4 w-4 shrink-0 text-neutral-500" aria-hidden="true" />
+            <span>Catatan Tambahan (opsional)</span>
           </label>
           <input
             id="notes"
@@ -386,59 +307,7 @@ export function CheckoutPreviewForm({
           </div>
         )}
 
-        {/* Ringkasan Subtotal + Estimasi Ongkos Kirim */}
-        {isFormUnlocked && (
-          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
-              <Truck className="h-4 w-4 text-orange-700" aria-hidden="true" />
-              <span>Rincian Estimasi Biaya</span>
-            </div>
-
-            <dl className="mt-3 space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-neutral-600">
-                  Subtotal Menu ({totals.totalQty} porsi)
-                </dt>
-                <dd className="font-medium tabular-nums text-neutral-900">
-                  {formatRupiah(totals.totalEstimatedPrice)}
-                </dd>
-              </div>
-
-              <div className="flex items-center justify-between gap-2">
-                <dt className="text-neutral-600">
-                  Estimasi Ongkos Kirim
-                  {shippingEstimate.isCalculated ? ` (${shippingEstimate.zoneLabel})` : ''}
-                </dt>
-                <dd className="font-medium tabular-nums text-neutral-900">
-                  {shippingEstimate.isCalculated
-                    ? shippingEstimate.shippingCost === 0
-                      ? 'Rp 0 (Gratis area)'
-                      : formatRupiah(shippingEstimate.shippingCost)
-                    : 'Konfirmasi admin'}
-                </dd>
-              </div>
-
-              <div className="flex items-baseline justify-between gap-2 border-t border-neutral-200 pt-2">
-                <dt className="font-semibold text-neutral-900">
-                  {shippingEstimate.isCalculated
-                    ? 'Estimasi Total Keseluruhan'
-                    : 'Total Estimasi Menu'}
-                </dt>
-                <dd className="text-xl font-semibold tabular-nums text-orange-700">
-                  {formatRupiah(grandTotal)}
-                </dd>
-              </div>
-            </dl>
-
-            <p className="mt-2 text-xs text-neutral-600">
-              {shippingEstimate.isCalculated
-                ? BUSINESS_MESSAGES.shippingEstimateDisclaimer
-                : BUSINESS_MESSAGES.shippingDetailNote}
-            </p>
-          </div>
-        )}
-
-        {previewMessage && (
+        {previewData && (
           <div className="pt-1">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-emerald-800">
@@ -452,9 +321,97 @@ export function CheckoutPreviewForm({
               </span>
             </div>
 
-            <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl border border-neutral-200 bg-neutral-50 p-4 font-sans text-sm leading-relaxed text-neutral-900">
-              {previewMessage}
-            </pre>
+            <div className="mt-2 space-y-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm leading-relaxed text-neutral-900">
+              <p>{previewData.greeting}</p>
+
+              <div className="space-y-1.5">
+                <p>Kategori: {previewData.categoryName}</p>
+                <p>Nama Pemesan: {previewData.customerName}</p>
+                <p className="flex items-start gap-2">
+                  <Calendar
+                    className="mt-0.5 h-4 w-4 shrink-0 text-orange-700"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="font-medium">Tanggal &amp; Jam Kirim:</span>{' '}
+                    {previewData.dateTimeDisplay}
+                  </span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <MapPin
+                    className="mt-0.5 h-4 w-4 shrink-0 text-orange-700"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="font-medium">Alamat Pengantaran (Area Jakarta):</span>{' '}
+                    {previewData.deliveryAddress}
+                  </span>
+                </p>
+              </div>
+
+              <div>
+                <p className="flex items-center gap-2 font-medium text-neutral-900">
+                  <ClipboardList
+                    className="h-4 w-4 shrink-0 text-orange-700"
+                    aria-hidden="true"
+                  />
+                  <span>Rincian Pesanan:</span>
+                </p>
+                <ul className="mt-1 space-y-1">
+                  {previewData.items.map((item) => (
+                    <li key={`${item.marker}-${item.titleLine}`}>
+                      <div>
+                        {item.marker} {item.titleLine}
+                      </div>
+                      <div className="pl-4 tabular-nums">{item.priceLine}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="space-y-1.5">
+                <p className="flex items-start gap-2">
+                  <Package
+                    className="mt-0.5 h-4 w-4 shrink-0 text-orange-700"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="font-medium">Total Porsi:</span>{' '}
+                    <span className="tabular-nums">{previewData.totalQty} porsi</span>
+                  </span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <Wallet
+                    className="mt-0.5 h-4 w-4 shrink-0 text-orange-700"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="font-medium">Total Estimasi Harga:</span>{' '}
+                    <span className="tabular-nums">
+                      {previewData.totalEstimatedPriceFormatted}
+                    </span>
+                  </span>
+                </p>
+                <p>{previewData.shippingNote}</p>
+              </div>
+
+              <p className="flex items-start gap-2">
+                <StickyNote
+                  className="mt-0.5 h-4 w-4 shrink-0 text-orange-700"
+                  aria-hidden="true"
+                />
+                <span>
+                  <span className="font-medium">Catatan Tambahan:</span>{' '}
+                  {previewData.notesDisplay}
+                </span>
+              </p>
+
+              <p>{previewData.closing}</p>
+            </div>
+
+            <p className="mt-2 text-xs text-neutral-600">
+              {BUSINESS_MESSAGES.shippingDetailNote}
+            </p>
           </div>
         )}
 

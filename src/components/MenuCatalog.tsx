@@ -168,20 +168,31 @@ export function MenuCatalog({
                   aria-label={`Lihat detail dan tips penyajian ${item.name}`}
                   className="group w-full rounded-xl text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
                 >
-                  <div
-                    role="img"
-                    aria-label={`Placeholder foto ${item.name}`}
-                    className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-neutral-100 px-4 text-center"
-                  >
-                    {isDrink ? (
-                      <Coffee className="h-6 w-6 text-neutral-400" aria-hidden="true" />
-                    ) : (
-                      <UtensilsCrossed className="h-6 w-6 text-neutral-400" aria-hidden="true" />
-                    )}
-                    <span className="line-clamp-1 text-sm text-neutral-500">
-                      {item.name}
-                    </span>
-                  </div>
+                  {item.imageUrl ? (
+                    <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-neutral-50 p-1">
+                      <img
+                        src={item.imageUrl}
+                        alt={`Foto menu ${item.name}`}
+                        loading="lazy"
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      role="img"
+                      aria-label={`Placeholder foto ${item.name}`}
+                      className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-neutral-100 px-4 text-center"
+                    >
+                      {isDrink ? (
+                        <Coffee className="h-6 w-6 text-neutral-400" aria-hidden="true" />
+                      ) : (
+                        <UtensilsCrossed className="h-6 w-6 text-neutral-400" aria-hidden="true" />
+                      )}
+                      <span className="line-clamp-1 text-sm text-neutral-500">
+                        {item.name}
+                      </span>
+                    </div>
+                  )}
 
                   {hasBadges && (
                     <div className="mt-3 flex flex-wrap items-center gap-1.5">

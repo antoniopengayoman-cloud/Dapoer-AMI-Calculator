@@ -5,8 +5,6 @@ import {
   BRAND_INFO,
   BUSINESS_MESSAGES,
   CATEGORIES,
-  DISTANCE_SHIPPING_RATE,
-  SHIPPING_ZONES,
 } from '../config.ts';
 import type {
   CartItem,
@@ -17,12 +15,9 @@ import type {
   MoqEvaluation,
   OrderInquiry,
   PackageSelection,
-  ShippingEstimate,
-  ShippingZoneId,
   TotalsSummary,
 } from '../types.ts';
 import {
-  formatDecimal,
   formatIndonesianDate,
   formatIndonesianTime,
   formatRupiah,
@@ -290,91 +285,16 @@ export function updateCartItemQuantity(
     .filter((item): item is CartItem => item !== null);
 }
 
-export function calculateShippingEstimate(
-  zoneId: ShippingZoneId,
-  distanceKmInput: string,
-): ShippingEstimate {
-  const zone = SHIPPING_ZONES.find((z) => z.id === zoneId) ?? SHIPPING_ZONES[0];
-
-  if (zone.id === 'admin-confirm') {
-    return {
-      zoneId: zone.id,
-      zoneLabel: zone.label,
-      isCalculated: false,
-      shippingCost: 0,
-      distanceKm: null,
-      isDistanceValid: true,
-    };
-  }
-
-  if (zone.id !== 'custom-distance') {
-    return {
-      zoneId: zone.id,
-      zoneLabel: zone.label,
-      isCalculated: true,
-      shippingCost: zone.flatFee,
-      distanceKm: null,
-      isDistanceValid: true,
-    };
-  }
-
-  const normalized = distanceKmInput.trim().replace(',', '.');
-  if (!normalized || !/^\d+(\.\d+)?$/.test(normalized)) {
-    return {
-      zoneId: zone.id,
-      zoneLabel: zone.label,
-      isCalculated: false,
-      shippingCost: 0,
-      distanceKm: null,
-      isDistanceValid: false,
-      distanceError: 'Masukkan jarak antara 0,1 sampai 60 km, contoh: 4,5.',
-    };
-  }
-
-  const parsedKm = Number.parseFloat(normalized);
-  if (!Number.isFinite(parsedKm) || parsedKm <= 0 || parsedKm > DISTANCE_SHIPPING_RATE.maxKm) {
-    return {
-      zoneId: zone.id,
-      zoneLabel: zone.label,
-      isCalculated: false,
-      shippingCost: 0,
-      distanceKm: null,
-      isDistanceValid: false,
-      distanceError: 'Masukkan jarak antara 0,1 sampai 60 km, contoh: 4,5.',
-    };
-  }
-
-  const shippingCost =
-    parsedKm <= DISTANCE_SHIPPING_RATE.freeUpToKm
-      ? 0
-      : Math.round(
-          (DISTANCE_SHIPPING_RATE.baseFee + parsedKm * DISTANCE_SHIPPING_RATE.perKmFee) /
-            DISTANCE_SHIPPING_RATE.roundTo,
-        ) * DISTANCE_SHIPPING_RATE.roundTo;
-
-  return {
-    zoneId: zone.id,
-    zoneLabel: `Jarak ${formatDecimal(parsedKm)} km`,
-    isCalculated: true,
-    shippingCost,
-    distanceKm: parsedKm,
-    isDistanceValid: true,
-  };
-}
-
 export function validateOrderInquiry(inquiry: OrderInquiry): {
   isValid: boolean;
   trimmed: OrderInquiry;
   errors: InquiryErrors;
 } {
-  const zoneId: ShippingZoneId = inquiry.shippingZoneId ?? 'admin-confirm';
   const trimmed: OrderInquiry = {
     customerName: inquiry.customerName.trim(),
     deliveryDate: inquiry.deliveryDate.trim(),
     deliveryTime: inquiry.deliveryTime.trim(),
     deliveryAddress: inquiry.deliveryAddress.trim(),
-    shippingZoneId: zoneId,
-    shippingDistanceKm: (inquiry.shippingDistanceKm ?? '').trim(),
     notes: inquiry.notes.trim(),
   };
 
@@ -387,14 +307,6 @@ export function validateOrderInquiry(inquiry: OrderInquiry): {
   if (trimmed.deliveryAddress.length < 5) {
     errors.deliveryAddress =
       'Masukkan alamat pengantaran area Jakarta, contoh: Menara Danareksa Lt. 5, Jl. Medan Merdeka Selatan No. 14.';
-  }
-
-  const shippingEstimate = calculateShippingEstimate(
-    trimmed.shippingZoneId,
-    trimmed.shippingDistanceKm,
-  );
-  if (!shippingEstimate.isDistanceValid && shippingEstimate.distanceError) {
-    errors.shippingDistanceKm = shippingEstimate.distanceError;
   }
 
   return {
@@ -412,18 +324,34 @@ function getLetterMarker(index: number): string {
   return `${index + 1}.`;
 }
 
-export function buildWhatsAppMessage(
+export interface WhatsAppPreviewItem {
+  marker: string;
+  titleLine: string;
+  priceLine: string;
+}
+
+export interface WhatsAppPreviewData {
+  greeting: string;
+  categoryName: string;
+  customerName: string;
+  dateTimeDisplay: string;
+  deliveryAddress: string;
+  items: WhatsAppPreviewItem[];
+  totalQty: number;
+  totalEstimatedPriceFormatted: string;
+  shippingNote: string;
+  notesDisplay: string;
+  closing: string;
+}
+
+export function buildWhatsAppPreviewData(
   inquiry: OrderInquiry,
   cart: CartItem[],
   categoryId: CategoryId,
-): string {
+): WhatsAppPreviewData {
   const category = CATEGORIES.find((c) => c.id === categoryId) ?? CATEGORIES[0];
   const totals = calculateTotals(cart);
   const leadTime = checkBandungLeadTime(cart, inquiry.deliveryDate);
-  const shipping = calculateShippingEstimate(
-    inquiry.shippingZoneId ?? 'admin-confirm',
-    inquiry.shippingDistanceKm ?? '',
-  );
 
   const formattedDate = formatIndonesianDate(inquiry.deliveryDate);
   const formattedTime = formatIndonesianTime(inquiry.deliveryTime);
@@ -437,15 +365,17 @@ export function buildWhatsAppMessage(
     dateTimeDisplay = formattedTime;
   }
 
-  const itemLines = cart
-    .map((item, idx) => {
-      const marker = getLetterMarker(idx);
-      const variantPart = item.optionSummary ? ` (${item.optionSummary})` : '';
-      const unitFormatted = formatRupiah(item.unitPrice);
-      const subtotalFormatted = formatRupiah(item.unitPrice * item.quantity);
-      return `${marker} ${item.name}${variantPart}\n   ${item.quantity} porsi x ${unitFormatted} = ${subtotalFormatted}`;
-    })
-    .join('\n');
+  const items: WhatsAppPreviewItem[] = cart.map((item, idx) => {
+    const marker = getLetterMarker(idx);
+    const variantPart = item.optionSummary ? ` (${item.optionSummary})` : '';
+    const unitFormatted = formatRupiah(item.unitPrice);
+    const subtotalFormatted = formatRupiah(item.unitPrice * item.quantity);
+    return {
+      marker,
+      titleLine: `${item.name}${variantPart}`,
+      priceLine: `${item.quantity} porsi x ${unitFormatted} = ${subtotalFormatted}`,
+    };
+  });
 
   const notesParts: string[] = [];
   if (inquiry.notes.trim()) {
@@ -458,41 +388,70 @@ export function buildWhatsAppMessage(
     notesParts.push(BUSINESS_MESSAGES.warungStockNote);
   }
 
-  const notesDisplay = notesParts.length > 0 ? notesParts.join(' | ') : '-';
+  return {
+    greeting:
+      'Halo Dapoer AMI! Saya ingin melakukan pemesanan / estimasi harga dengan rincian berikut:',
+    categoryName: category.name,
+    customerName: inquiry.customerName.trim(),
+    dateTimeDisplay,
+    deliveryAddress: inquiry.deliveryAddress.trim(),
+    items,
+    totalQty: totals.totalQty,
+    totalEstimatedPriceFormatted: formatRupiah(totals.totalEstimatedPrice),
+    shippingNote:
+      '(Catatan: Harga belum termasuk ongkos kirim; konfirmasi ongkir via admin sesuai jarak pengantaran area Jakarta)',
+    notesDisplay: notesParts.length > 0 ? notesParts.join(' | ') : '-',
+    closing: 'Mohon konfirmasi ketersediaan dan total beserta ongkirnya. Terima kasih!',
+  };
+}
 
-  const pricingLines = shipping.isCalculated
-    ? [
-        `Total Porsi: ${totals.totalQty} porsi`,
-        `Subtotal Menu: ${formatRupiah(totals.totalEstimatedPrice)}`,
-        `Estimasi Ongkos Kirim (${shipping.zoneLabel}): ${formatRupiah(shipping.shippingCost)}`,
-        `Estimasi Total Keseluruhan: ${formatRupiah(totals.totalEstimatedPrice + shipping.shippingCost)}`,
-        '(Catatan: Biaya kirim di atas adalah estimasi awal dan akan dikonfirmasi ulang oleh admin)',
-      ]
-    : [
-        `Total Porsi: ${totals.totalQty} porsi`,
-        `Total Estimasi Harga: ${formatRupiah(totals.totalEstimatedPrice)}`,
-        '(Catatan: Harga belum termasuk ongkos kirim)',
-      ];
+export function buildWhatsAppMessage(
+  inquiry: OrderInquiry,
+  cart: CartItem[],
+  categoryId: CategoryId,
+): string {
+  const data = buildWhatsAppPreviewData(inquiry, cart, categoryId);
+  const itemLines = data.items
+    .map((item) => `${item.marker} ${item.titleLine}\n   ${item.priceLine}`)
+    .join('\n');
 
   return [
-    'Halo Dapoer AMI! Saya ingin melakukan pemesanan / estimasi harga dengan rincian berikut:',
+    data.greeting,
     '',
-    `Kategori: ${category.name}`,
-    `Nama Pemesan: ${inquiry.customerName.trim()}`,
-    `Tanggal & Jam Kirim: ${dateTimeDisplay}`,
-    `Alamat Pengantaran (Area Jakarta): ${inquiry.deliveryAddress.trim()}`,
+    `Kategori: ${data.categoryName}`,
+    `Nama Pemesan: ${data.customerName}`,
+    `Tanggal & Jam Kirim: ${data.dateTimeDisplay}`,
+    `Alamat Pengantaran (Area Jakarta): ${data.deliveryAddress}`,
     '',
     'Rincian Pesanan:',
     itemLines,
     '',
-    ...pricingLines,
+    `Total Porsi: ${data.totalQty} porsi`,
+    `Total Estimasi Harga: ${data.totalEstimatedPriceFormatted}`,
+    data.shippingNote,
     '',
-    `Catatan Tambahan: ${notesDisplay}`,
+    `Catatan Tambahan: ${data.notesDisplay}`,
     '',
-    'Mohon konfirmasi ketersediaan dan total beserta ongkirnya. Terima kasih!',
+    data.closing,
   ].join('\n');
 }
 
 export function buildWhatsAppUrl(message: string): string {
   return `https://wa.me/${BRAND_INFO.whatsappTarget}?text=${encodeURIComponent(message)}`;
 }
+
+export function buildAdminChatMessage(categoryId?: CategoryId): string {
+  if (!categoryId) {
+    return BUSINESS_MESSAGES.adminChatGreeting;
+  }
+  const category = CATEGORIES.find((c) => c.id === categoryId);
+  if (!category) {
+    return BUSINESS_MESSAGES.adminChatGreeting;
+  }
+  return `${BUSINESS_MESSAGES.adminChatGreeting} (Kategori: ${category.name})`;
+}
+
+export function buildAdminWhatsAppUrl(categoryId?: CategoryId): string {
+  return buildWhatsAppUrl(buildAdminChatMessage(categoryId));
+}
+

@@ -67,18 +67,28 @@ export function ProductDetailModal({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
-          <div
-            role="img"
-            aria-label={`Placeholder foto ${menuItem.name}`}
-            className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-neutral-100 px-4 text-center"
-          >
-            {isDrink ? (
-              <Coffee className="h-7 w-7 text-neutral-400" aria-hidden="true" />
-            ) : (
-              <UtensilsCrossed className="h-7 w-7 text-neutral-400" aria-hidden="true" />
-            )}
-            <span className="text-sm text-neutral-500">{menuItem.name}</span>
-          </div>
+          {menuItem.imageUrl ? (
+            <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-neutral-50 p-1">
+              <img
+                src={menuItem.imageUrl}
+                alt={`Foto menu ${menuItem.name}`}
+                className="h-full w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div
+              role="img"
+              aria-label={`Placeholder foto ${menuItem.name}`}
+              className="flex aspect-[16/9] w-full flex-col items-center justify-center gap-1.5 rounded-xl bg-neutral-100 px-4 text-center"
+            >
+              {isDrink ? (
+                <Coffee className="h-7 w-7 text-neutral-400" aria-hidden="true" />
+              ) : (
+                <UtensilsCrossed className="h-7 w-7 text-neutral-400" aria-hidden="true" />
+              )}
+              <span className="text-sm text-neutral-500">{menuItem.name}</span>
+            </div>
+          )}
 
           {(menuItem.isBestSeller || menuItem.unitNote || menuItem.leadTimeNote) && (
             <div className="flex flex-wrap items-center gap-2">

@@ -6,6 +6,7 @@ import {CalculatorSummary} from './components/CalculatorSummary.tsx';
 import {CategorySwitchModal} from './components/CategorySwitchModal.tsx';
 import {CategoryTabs} from './components/CategoryTabs.tsx';
 import {CheckoutPreviewForm} from './components/CheckoutPreviewForm.tsx';
+import {FloatingAdminButton} from './components/FloatingAdminButton.tsx';
 import {FloatingCartBar} from './components/FloatingCartBar.tsx';
 import {LunchBoxConfiguratorModal} from './components/LunchBoxConfiguratorModal.tsx';
 import {MenuCatalog} from './components/MenuCatalog.tsx';
@@ -13,7 +14,6 @@ import {OrderHistorySection} from './components/OrderHistorySection.tsx';
 import {ProductDetailModal} from './components/ProductDetailModal.tsx';
 import {BRAND_INFO, CATEGORIES, MENU_ITEMS, SUB_CATEGORIES} from './config.ts';
 import {
-  calculateShippingEstimate,
   calculateTotals,
   checkBandungLeadTime,
   evaluateMoq,
@@ -161,10 +161,6 @@ export default function App() {
   const handleSaveToHistory = (trimmedInquiry: OrderInquiry, whatsappMessage: string) => {
     const categoryName =
       CATEGORIES.find((c) => c.id === effectiveCategoryId)?.name ?? 'Paket Catering';
-    const shippingEstimate = calculateShippingEstimate(
-      trimmedInquiry.shippingZoneId,
-      trimmedInquiry.shippingDistanceKm,
-    );
     const entryId =
       typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
         ? crypto.randomUUID()
@@ -177,7 +173,7 @@ export default function App() {
       categoryName,
       items: cart.map((item) => ({...item})),
       totalQty: totalsSummary.totalQty,
-      totalEstimatedPrice: totalsSummary.totalEstimatedPrice + shippingEstimate.shippingCost,
+      totalEstimatedPrice: totalsSummary.totalEstimatedPrice,
       hasBandungItem: leadTimeEvaluation.hasBandungItem,
       inquiry: {...trimmedInquiry},
       whatsappMessage,
@@ -252,7 +248,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-12">
+      <main className="mx-auto max-w-6xl px-4 pb-36 pt-6 sm:px-6 lg:px-8 lg:pb-24">
         <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-8">
           <div className="lg:col-span-8">
             <CategoryTabs
@@ -322,6 +318,8 @@ export default function App() {
         moq={moqEvaluation}
         onOpenDrawer={() => setIsDrawerOpen(true)}
       />
+
+      <FloatingAdminButton activeCategoryId={activeCategoryId} />
 
       <CalculatorDrawer
         isOpen={isDrawerOpen}
