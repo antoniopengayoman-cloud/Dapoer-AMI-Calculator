@@ -43,4 +43,4 @@ Dokumen ini mencatat keputusan desain antarmuka yang telah disetujui untuk aplik
 ### Aksesibilitas & Batasan
 - Area sentuh seluruh tombol dan kontrol interaktif minimal `44 × 44 px`
 - Aksi utama langsung terlihat pada layar `360 × 740 px` tanpa menggulir
-- Tanpa gradasi, `backdrop-blur`, emoji pengganti ikon, pola titik dekoratif, atau animasi berat (hanya `transform` dan `opacity` 150–200 ms `ease-out` dengan `motion-reduce:transition-none`)
+- Tanpa gradasi, `backdrop-blur`, emoji pengganti ikon, pola titik dekoratif, atau animasi berat (hanya `transform` dan `opacity` `150–200 ms` `ease-out`, termasuk transisi fade-in `180 ms` `animate-catalog-fade` saat berpindah kategori dengan `motion-reduce:animate-none` dan `motion-reduce:transition-none`)

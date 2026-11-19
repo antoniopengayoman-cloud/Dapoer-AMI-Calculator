@@ -12,3 +12,25 @@
     color: #171717;
   }
 }
+
+@keyframes catalogFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-catalog-fade {
+  animation: catalogFadeIn 180ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-catalog-fade {
+    animation: none;
+  }
+}
+

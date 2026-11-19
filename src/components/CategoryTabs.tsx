@@ -56,7 +56,10 @@ export function CategoryTabs({
         })}
       </div>
 
-      <p className="mt-3 text-sm text-neutral-600">
+      <p
+        key={activeCategory.id}
+        className="mt-3 text-sm text-neutral-600 animate-catalog-fade motion-reduce:animate-none"
+      >
         {activeCategory.description}
       </p>
     </section>

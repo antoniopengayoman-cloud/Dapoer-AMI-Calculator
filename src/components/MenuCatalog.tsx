@@ -1,6 +1,7 @@
-/* Komponen katalog produk, pencarian nama menu, dan filter sub-kategori (FT-02) */
+/* Komponen katalog produk, pencarian nama menu, filter sub-kategori, dan pemicu Tips Penyajian (FT-02 & FT-11) */
 import {
   Award,
+  BookOpen,
   Clock,
   Coffee,
   Minus,
@@ -12,9 +13,10 @@ import {
 } from 'lucide-react';
 import {filterMenuItems} from '../lib/calculator.ts';
 import {formatRupiah} from '../lib/format.ts';
-import type {CartItem, MenuItem} from '../types.ts';
+import type {CartItem, CategoryId, MenuItem} from '../types.ts';
 
 interface MenuCatalogProps {
+  activeCategoryId: CategoryId;
   items: MenuItem[];
   subCategories: string[];
   activeSubCategory: string;
@@ -25,9 +27,11 @@ interface MenuCatalogProps {
   onAddRegularItem: (item: MenuItem) => void;
   onUpdateRegularQty: (menuItemId: string, delta: number) => void;
   onOpenConfigurator: (item: MenuItem) => void;
+  onSelectDetail: (item: MenuItem) => void;
 }
 
 export function MenuCatalog({
+  activeCategoryId,
   items,
   subCategories,
   activeSubCategory,
@@ -38,6 +42,7 @@ export function MenuCatalog({
   onAddRegularItem,
   onUpdateRegularQty,
   onOpenConfigurator,
+  onSelectDetail,
 }: MenuCatalogProps) {
   const showSubFilters = subCategories.length > 1;
   const filteredItems = filterMenuItems(items, activeSubCategory, searchQuery);
@@ -61,47 +66,50 @@ export function MenuCatalog({
 
   return (
     <section aria-label="Daftar Menu" className="mt-6">
-      <div className="mb-4 space-y-3">
-        <div>
-          <label
-            htmlFor="menu-search"
-            className="block text-sm font-medium text-neutral-900"
-          >
-            Cari menu
-          </label>
-          <div className="relative mt-1.5">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-              aria-hidden="true"
-            />
-            <input
-              id="menu-search"
-              name="menuSearch"
-              type="search"
-              inputMode="search"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Contoh: Tongkol, Bento, Spaghetti"
-              className="w-full min-h-[44px] rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-11 text-base text-neutral-900 placeholder:text-neutral-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
-            />
-            {searchQuery.length > 0 && (
-              <button
-                type="button"
-                aria-label="Hapus pencarian"
-                onClick={() => onSearchChange('')}
-                className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-neutral-500 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            )}
-          </div>
+      <div className={showSubFilters ? 'mb-3' : 'mb-4'}>
+        <label
+          htmlFor="menu-search"
+          className="block text-sm font-medium text-neutral-900"
+        >
+          Cari menu
+        </label>
+        <div className="relative mt-1.5">
+          <Search
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+            aria-hidden="true"
+          />
+          <input
+            id="menu-search"
+            name="menuSearch"
+            type="search"
+            inputMode="search"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Contoh: Tongkol, Bento, Spaghetti"
+            className="w-full min-h-[44px] rounded-xl border border-neutral-200 bg-white py-2.5 pl-10 pr-11 text-base text-neutral-900 placeholder:text-neutral-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+          />
+          {searchQuery.length > 0 && (
+            <button
+              type="button"
+              aria-label="Hapus pencarian"
+              onClick={() => onSearchChange('')}
+              className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-neutral-500 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
+      </div>
 
+      <div
+        key={activeCategoryId}
+        className="animate-catalog-fade motion-reduce:animate-none"
+      >
         {showSubFilters && (
           <div
             role="group"
             aria-label="Filter sub-kategori"
-            className="flex flex-wrap gap-2"
+            className="mb-4 flex flex-wrap gap-2"
           >
             {subCategories.map((sub) => {
               const isSelected = sub === activeSubCategory;
@@ -122,27 +130,26 @@ export function MenuCatalog({
             })}
           </div>
         )}
-      </div>
 
-      {filteredItems.length === 0 ? (
-        <div className="rounded-2xl bg-white p-8 text-center">
-          <p className="text-sm text-neutral-600">
-            {searchQuery.trim()
-              ? `Tidak ada menu dengan nama "${searchQuery.trim()}" pada kategori ini.`
-              : 'Belum ada menu yang sesuai pada sub-kategori ini.'}
-          </p>
-          {hasActiveFilter && (
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
-            >
-              Reset Pencarian
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {filteredItems.length === 0 ? (
+          <div className="rounded-2xl bg-white p-8 text-center">
+            <p className="text-sm text-neutral-600">
+              {searchQuery.trim()
+                ? `Tidak ada menu dengan nama "${searchQuery.trim()}" pada kategori ini.`
+                : 'Belum ada menu yang sesuai pada sub-kategori ini.'}
+            </p>
+            {hasActiveFilter && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+              >
+                Reset Pencarian
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {filteredItems.map((item) => {
             const regularQty = getRegularCartQty(item.id);
             const customQty = getCustomCartQty(item.id);
@@ -155,7 +162,12 @@ export function MenuCatalog({
                 key={item.id}
                 className="flex flex-col justify-between rounded-2xl bg-white p-4 transition-transform duration-150 ease-out hover:-translate-y-0.5 motion-reduce:transition-none sm:p-5"
               >
-                <div>
+                <button
+                  type="button"
+                  onClick={() => onSelectDetail(item)}
+                  aria-label={`Lihat detail dan tips penyajian ${item.name}`}
+                  className="group w-full rounded-xl text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700"
+                >
                   <div
                     role="img"
                     aria-label={`Placeholder foto ${item.name}`}
@@ -193,21 +205,26 @@ export function MenuCatalog({
                     </div>
                   )}
 
-                  <h2 className="mt-3 text-base font-semibold text-neutral-900">
+                  <h2 className="mt-3 text-base font-semibold text-neutral-900 group-hover:text-orange-700">
                     {item.name}
                   </h2>
 
                   <p className="mt-1 text-sm leading-relaxed text-neutral-600">
                     {item.description}
                   </p>
-                </div>
 
-                <div className="mt-4 flex items-center justify-between gap-3 pt-2">
+                  <span className="mt-2 inline-flex min-h-[32px] items-center gap-1.5 text-sm font-medium text-orange-700 group-hover:underline">
+                    <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>Lihat Tips Penyajian</span>
+                  </span>
+                </button>
+
+                <div className="mt-3 flex items-center justify-between gap-3 pt-2">
                   <div>
                     <p className="text-base font-semibold tabular-nums text-neutral-900">
                       {formatRupiah(item.price)}
                     </p>
-                    <p className="text-xs text-neutral-500">per porsi</p>
+                    <p className="text-sm text-neutral-500">per porsi</p>
                   </div>
 
                   {item.isCustomizable ? (
@@ -260,8 +277,9 @@ export function MenuCatalog({
               </article>
             );
           })}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

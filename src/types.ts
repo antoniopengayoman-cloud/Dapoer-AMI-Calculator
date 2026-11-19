@@ -22,6 +22,7 @@ export interface MenuItem {
   isCustomizable: boolean;
   requiredLaukCount: 0 | 3 | 4;
   leadTimeNote?: string;
+  servingTip: string;
   isVisible: boolean;
 }
 

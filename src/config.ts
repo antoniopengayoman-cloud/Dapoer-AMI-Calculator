@@ -153,6 +153,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan hangat dalam wadah tertutup hingga waktu makan tiba.',
     isVisible: false,
   },
 
@@ -167,6 +168,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: true,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Aduk rata nasi hangat bersama telur ceplok dan sambal kecombrang sebelum disantap.',
     isVisible: true,
   },
   {
@@ -179,6 +181,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Nikmati selagi hangat; sisihkan sambal kecombrang bila ingin rasa pedas yang lebih ringan.',
     isVisible: true,
   },
   {
@@ -191,6 +194,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan langsung dalam kondisi hangat agar aroma segar sambal matah tetap terasa.',
     isVisible: true,
   },
   {
@@ -203,6 +207,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: true,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan hangat segera setelah tiba agar tekstur cumi tetap empuk dan gurih.',
     isVisible: true,
   },
 
@@ -217,6 +222,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: true,
     requiredLaukCount: 3,
+    servingTip: 'Buka tutup kemasan saat jam makan siang; padukan Nasi Liwet dengan satu sayur dan satu gorengan.',
     isVisible: true,
   },
   {
@@ -229,6 +235,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: true,
     isCustomizable: true,
     requiredLaukCount: 4,
+    servingTip: 'Atur jadwal kirim 15 hingga 30 menit sebelum jam istirahat agar nasi dan gorengan tetap hangat.',
     isVisible: true,
   },
   {
@@ -241,6 +248,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: true,
     requiredLaukCount: 4,
+    servingTip: 'Cocok untuk penyajian di meja rapat formal; nikmati sambal kecombrang terpisah sesuai selera.',
     isVisible: true,
   },
 
@@ -256,6 +264,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan pada suhu ruang atau hangatkan sebentar di microwave 15 detik sebelum dibagikan.',
     isVisible: true,
   },
   {
@@ -268,6 +277,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Aduk rata pasta dan saus daging tomat hangat sebelum disantap di ruang rapat.',
     isVisible: true,
   },
   {
@@ -280,6 +290,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Paling nikmat disantap selagi hangat agar saus krim tetap lembut dan tidak mengental.',
     isVisible: true,
   },
   {
@@ -292,6 +303,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Aduk merata bumbu bawang putih dan minyak zaitun sebelum disantap.',
     isVisible: true,
   },
   {
@@ -304,6 +316,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Dapat disajikan hangat maupun suhu ruang sehingga praktis untuk acara rapat seharian.',
     isVisible: true,
   },
   {
@@ -318,6 +331,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isCustomizable: false,
     requiredLaukCount: 0,
     leadTimeNote: 'H-2 Bandung',
+    servingTip: 'Kukus 5 hingga 8 menit sebelum disajikan lalu siram bumbu kacang sesuai selera.',
     isVisible: true,
   },
 
@@ -332,6 +346,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Nikmati langsung bersama lalapan segar dan sambal untuk makan siang harian.',
     isVisible: true,
   },
   {
@@ -344,6 +359,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Santap selagi hangat agar aroma sambal matah dan lalapan tetap segar.',
     isVisible: true,
   },
   {
@@ -356,6 +372,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan hangat segera agar bagian luar ayam kipas tetap renyah.',
     isVisible: true,
   },
   {
@@ -368,6 +385,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Aduk nasi hangat dengan bumbu cabe ijo lalu lengkapi dengan lalapan segar.',
     isVisible: true,
   },
   {
@@ -380,6 +398,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Cocok disantap hangat bersama sayur tumis dan lalapan pada jam makan siang.',
     isVisible: true,
   },
 
@@ -394,6 +413,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Hangatkan sebentar di wajan atau microwave 30 detik jika dibawa pulang untuk makan malam.',
     isVisible: true,
   },
   {
@@ -406,6 +426,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan dengan nasi putih hangat di rumah atau kantor sebagai lauk praktis.',
     isVisible: true,
   },
   {
@@ -418,6 +439,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Panaskan sebentar di air fryer atau oven jika ingin kembali renyah saat disantap.',
     isVisible: true,
   },
   {
@@ -430,6 +452,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan dengan nasi hangat dan hindari pemanasan terlalu lama agar cumi tetap lembut.',
     isVisible: true,
   },
   {
@@ -442,6 +465,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Letakkan di atas nasi hangat atau paket lauk satuan agar makan siang lebih mengenyangkan.',
     isVisible: true,
   },
   {
@@ -454,6 +478,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Nikmati sebagai gorengan renyah pelengkap paket nasi atau lauk berkuah.',
     isVisible: true,
   },
 
@@ -468,6 +493,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Tuang kuah kaldu hangat tepat saat akan disantap agar nasi tetap pas teksturnya.',
     isVisible: true,
   },
   {
@@ -480,6 +506,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Santap selagi hangat untuk menjaga kerenyahan ayam geprek bersama sambal.',
     isVisible: true,
   },
 
@@ -494,6 +521,7 @@ export const MENU_ITEMS: MenuItem[] = [
     isBestSeller: false,
     isCustomizable: false,
     requiredLaukCount: 0,
+    servingTip: 'Sajikan dalam keadaan sejuk atau suhu ruang sebagai pendamping setiap paket makan.',
     isVisible: true,
   },
 ];

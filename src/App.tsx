@@ -10,6 +10,7 @@ import {FloatingCartBar} from './components/FloatingCartBar.tsx';
 import {LunchBoxConfiguratorModal} from './components/LunchBoxConfiguratorModal.tsx';
 import {MenuCatalog} from './components/MenuCatalog.tsx';
 import {OrderHistorySection} from './components/OrderHistorySection.tsx';
+import {ProductDetailModal} from './components/ProductDetailModal.tsx';
 import {BRAND_INFO, CATEGORIES, MENU_ITEMS, SUB_CATEGORIES} from './config.ts';
 import {
   calculateShippingEstimate,
@@ -47,6 +48,7 @@ export default function App() {
   const [history, setHistory] = useState<OrderHistoryEntry[]>(initialState.history);
 
   const [configuratorItem, setConfiguratorItem] = useState<MenuItem | null>(null);
+  const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<PendingSwitchAction | null>(null);
 
@@ -261,6 +263,7 @@ export default function App() {
             />
 
             <MenuCatalog
+              activeCategoryId={activeCategoryId}
               items={visibleMenuItems}
               subCategories={SUB_CATEGORIES[activeCategoryId]}
               activeSubCategory={activeSubCategory}
@@ -271,6 +274,7 @@ export default function App() {
               onAddRegularItem={handleAddRegularItem}
               onUpdateRegularQty={handleUpdateRegularQty}
               onOpenConfigurator={handleOpenConfigurator}
+              onSelectDetail={setDetailItem}
             />
 
             <CheckoutPreviewForm
@@ -337,6 +341,13 @@ export default function App() {
         menuItem={configuratorItem}
         onClose={() => setConfiguratorItem(null)}
         onSaveToCart={handleSaveConfiguredPackage}
+      />
+
+      <ProductDetailModal
+        menuItem={detailItem}
+        onClose={() => setDetailItem(null)}
+        onAddRegularItem={handleAddRegularItem}
+        onOpenConfigurator={handleOpenConfigurator}
       />
 
       <CategorySwitchModal
