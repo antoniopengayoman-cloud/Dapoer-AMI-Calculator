@@ -1,0 +1,14 @@
+/* Gaya global aplikasi Dapoer AMI berbasis Tailwind CSS dan Plus Jakarta Sans */
+@import "tailwindcss";
+
+@layer base {
+  html {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #fafafa;
+    color: #171717;
+  }
+}
